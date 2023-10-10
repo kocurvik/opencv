@@ -379,7 +379,7 @@ public:
     virtual bool verifyFundamental (const Mat &F_best, const Score &F_score, const std::vector<bool> &inliers_mask, cv::Mat &F_new, Score &new_score) = 0;
     static Ptr<FundamentalDegeneracy> create (int state, const Ptr<Quality> &quality_,
         const Mat &points_, int sample_size_, int max_iters_plane_and_parallax,
-        double homography_threshold, double f_inlier_thr_sqr, const Mat true_K1=Mat(), const Mat true_K2=Mat());
+        double homography_threshold, double f_inlier_thr_sqr, const bool real_focal_degen = false, const Mat true_K1=Mat(), const Mat true_K2=Mat());
 };
 
 /////////////////////////////////////////////////////////////////////////////////////
@@ -916,6 +916,7 @@ public:
     virtual int getLevMarqItersLO () const = 0;
     virtual bool isLarssonOptimization () const = 0;
     virtual int getProsacMaxSamples() const = 0;
+    virtual bool getRealFocalDegen() const = 0;
 
     // setters
     virtual void setNonRandomnessTest (bool set) = 0;
@@ -932,6 +933,7 @@ public:
     virtual void setLOSampleSize (int lo_sample_size) = 0;
     virtual void setRandomGeneratorState (int state) = 0;
     virtual void setFinalLSQ (int iters) = 0;
+    virtual void setRealFocalDegen(bool real_focal_degen) = 0;
 
     virtual void maskRequired (bool required) = 0;
     virtual bool isMaskRequired () const = 0;

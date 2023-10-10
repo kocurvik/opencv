@@ -834,7 +834,7 @@ cv::Mat cv::findFundamentalMat( InputArray _points1, InputArray _points2,
 {
     CV_INSTRUMENT_REGION();
 
-    if (method >= USAC_DEFAULT && method <= USAC_MAGSAC)
+    if (method >= USAC_DEFAULT && method <= USAC_MAGSAC_RFD)
         return usac::findFundamentalMat(_points1, _points2, method,
             ransacReprojThreshold, confidence, maxIters, _mask);
 

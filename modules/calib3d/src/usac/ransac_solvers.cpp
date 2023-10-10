@@ -2,6 +2,7 @@
 // It is subject to the license terms in the LICENSE file found in the top-level directory
 // of this distribution and at http://opencv.org/license.html.
 
+#include <iostream>
 #include "../precomp.hpp"
 #include "../usac.hpp"
 #include <atomic>
@@ -311,7 +312,7 @@ public:
         } else if (params->isFundamental()) {
             if (K1.empty() || K2.empty()) {
                 degeneracy = FundamentalDegeneracy::create(state++, quality, points, min_sample_size,
-                   params->getPlaneAndParallaxIters(), std::max(threshold, 8.) /*sqr homogr thr*/, inner_inlier_thr_sqr, K1, K2);
+                   params->getPlaneAndParallaxIters(), std::max(threshold, 8.) /*sqr homogr thr*/, inner_inlier_thr_sqr, params->getRealFocalDegen(), K1, K2);
             } else degeneracy = FundamentalDegeneracyViaE::create(quality, points, calib_points, K1, K2, true/*is F*/);
             if (min_sample_size == 7) {
                 min_solver = FundamentalMinimalSolver7pts::create(points, is_ge_solver);
@@ -1077,6 +1078,7 @@ void setParameters (Ptr<Model> &params, EstimationMethod estimator, const UsacPa
     params->setParallel(usac_params.isParallel);
     params->setNeighborsType(usac_params.neighborsSearch);
     params->setRandomGeneratorState(usac_params.randomGeneratorState);
+    params->setRealFocalDegen(usac_params.realFocalDegen);
     params->maskRequired(mask_needed);
 }
 
@@ -1124,6 +1126,55 @@ void setParameters (int flag, Ptr<Model> &params, EstimationMethod estimator, do
             params = Model::create(thr, EstimationMethod::FUNDAMENTAL8,SamplingMethod::SAMPLING_UNIFORM,
                     conf, max_iters,ScoreMethod::SCORE_METHOD_MSAC);
             params->setLocalOptimization(LocalOptimMethod ::LOCAL_OPTIM_INNER_LO);
+            break;
+        case USAC_DEFAULT_RFD:
+            params = Model::create(thr, estimator, SamplingMethod::SAMPLING_UNIFORM, conf, max_iters,
+                                   ScoreMethod::SCORE_METHOD_MSAC);
+            params->setLocalOptimization(LocalOptimMethod ::LOCAL_OPTIM_INNER_AND_ITER_LO);
+            params->setRealFocalDegen(true);
+            break;
+        case USAC_MAGSAC_RFD:
+            params = Model::create(thr, estimator, SamplingMethod::SAMPLING_UNIFORM, conf, max_iters,
+                                   ScoreMethod::SCORE_METHOD_MAGSAC);
+            params->setLocalOptimization(LocalOptimMethod ::LOCAL_OPTIM_SIGMA);
+            params->setLOSampleSize(params->isHomography() ? 75 : 50);
+            params->setLOIterations(params->isHomography() ? 15 : 10);
+            params->setRealFocalDegen(true);
+            break;
+        case USAC_PARALLEL_RFD:
+            params = Model::create(thr, estimator, SamplingMethod::SAMPLING_UNIFORM, conf, max_iters,
+                                   ScoreMethod::SCORE_METHOD_MSAC);
+            params->setParallel(true);
+            params->setLocalOptimization(LocalOptimMethod ::LOCAL_OPTIM_INNER_LO);
+            params->setRealFocalDegen(true);
+            break;
+        case USAC_ACCURATE_RFD:
+            params = Model::create(thr, estimator, SamplingMethod::SAMPLING_UNIFORM, conf, max_iters,
+                                   ScoreMethod::SCORE_METHOD_MSAC);
+            params->setLocalOptimization(LocalOptimMethod ::LOCAL_OPTIM_GC);
+            params->setLOSampleSize(20);
+            params->setLOIterations(25);
+            params->setRealFocalDegen(true);
+            break;
+        case USAC_FAST_RFD:
+            params = Model::create(thr, estimator, SamplingMethod::SAMPLING_UNIFORM, conf, max_iters,
+                                   ScoreMethod::SCORE_METHOD_MSAC);
+            params->setLocalOptimization(LocalOptimMethod ::LOCAL_OPTIM_INNER_AND_ITER_LO);
+            params->setLOIterations(5);
+            params->setLOIterativeIters(3);
+            params->setRealFocalDegen(true);
+            break;
+        case USAC_PROSAC_RFD:
+            params = Model::create(thr, estimator, SamplingMethod::SAMPLING_PROSAC, conf, max_iters,
+                                   ScoreMethod::SCORE_METHOD_MSAC);
+            params->setLocalOptimization(LocalOptimMethod ::LOCAL_OPTIM_INNER_LO);
+            params->setRealFocalDegen(true);
+            break;
+        case USAC_FM_8PTS_RFD:
+            params = Model::create(thr, EstimationMethod::FUNDAMENTAL8,SamplingMethod::SAMPLING_UNIFORM,
+                    conf, max_iters,ScoreMethod::SCORE_METHOD_MSAC);
+            params->setLocalOptimization(LocalOptimMethod ::LOCAL_OPTIM_INNER_LO);
+            params->setRealFocalDegen(true);
             break;
         default: CV_Error(cv::Error::StsBadFlag, "Incorrect flag for USAC!");
     }
@@ -1290,6 +1341,8 @@ private:
     //for final least squares polisher
     int final_lsq_iters = 7;
 
+    bool real_focal_degen = false;
+
     bool need_mask = true, // do we need inlier mask in the end
         is_parallel = false, // use parallel RANSAC
         is_nonrand_test = false; // is test for the final model non-randomness
@@ -1364,6 +1417,7 @@ public:
     void setRandomGeneratorState (int state) override { random_generator_state = state; }
     void setLOIterativeIters (int iters) override { lo_iterative_iterations = iters; }
     void setFinalLSQ (int iters) override { final_lsq_iters = iters; }
+    void setRealFocalDegen (bool rfd) override { real_focal_degen = rfd;}
 
     // getters
     int getProsacMaxSamples() const override { return prosac_max_samples; }
@@ -1424,6 +1478,7 @@ public:
     bool isPnP() const override {
         return estimator == EstimationMethod ::P3P || estimator == EstimationMethod ::P6P;
     }
+    bool getRealFocalDegen() const override { return real_focal_degen; }
 };
 
 Ptr<Model> Model::create(double threshold_, EstimationMethod estimator_, SamplingMethod sampler_,

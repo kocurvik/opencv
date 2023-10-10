@@ -448,13 +448,22 @@ namespace cv
 enum { LMEDS  = 4,  //!< least-median of squares algorithm
        RANSAC = 8,  //!< RANSAC algorithm
        RHO    = 16, //!< RHO algorithm
-       USAC_DEFAULT  = 32, //!< USAC algorithm, default settings
-       USAC_PARALLEL = 33, //!< USAC, parallel version
-       USAC_FM_8PTS = 34,  //!< USAC, fundamental matrix 8 points
-       USAC_FAST = 35,     //!< USAC, fast settings
-       USAC_ACCURATE = 36, //!< USAC, accurate settings
-       USAC_PROSAC = 37,   //!< USAC, sorted points, runs PROSAC
-       USAC_MAGSAC = 38    //!< USAC, runs MAGSAC++
+    USAC_DEFAULT = 32, //!< USAC algorithm, default settings
+    USAC_PARALLEL = 33, //!< USAC, parallel version
+    USAC_FM_8PTS = 34,  //!< USAC, fundamental matrix 8 points
+    USAC_FAST = 35,     //!< USAC, fast settings
+    USAC_ACCURATE = 36, //!< USAC, accurate settings
+    USAC_PROSAC = 37,   //!< USAC, sorted points, runs PROSAC
+    USAC_MAGSAC = 38,    //!< USAC, runs MAGSAC++
+
+    USAC_DEFAULT_RFD = 39, //!< USAC algorithm, default settings
+    USAC_PARALLEL_RFD = 40, //!< USAC, parallel version
+    USAC_FM_8PTS_RFD = 41,  //!< USAC, fundamental matrix 8 points
+    USAC_FAST_RFD = 42,     //!< USAC, fast settings
+    USAC_ACCURATE_RFD = 43, //!< USAC, accurate settings
+    USAC_PROSAC_RFD = 44,   //!< USAC, sorted points, runs PROSAC
+    USAC_MAGSAC_RFD = 45,    //!< USAC, runs MAGSAC++
+       
      };
 
 enum SolvePnPMethod {
@@ -572,6 +581,7 @@ struct CV_EXPORTS_W_SIMPLE UsacParams
     CV_PROP_RW double threshold;
     CV_PROP_RW PolishingMethod final_polisher;
     CV_PROP_RW int final_polisher_iterations;
+    CV_PROP_RW bool realFocalDegen;
 };
 
 /** @brief Converts a rotation matrix to a rotation vector or vice versa.
